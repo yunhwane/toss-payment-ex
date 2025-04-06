@@ -4,6 +4,9 @@ import com.yh.paymentwebflux.common.WebAdapter
 import com.yh.paymentwebflux.payment.adapter.`in`.web.request.TossPaymentConfirmRequest
 import com.yh.paymentwebflux.payment.adapter.`in`.web.response.ApiResponse
 import com.yh.paymentwebflux.payment.adapter.out.web.toss.executor.TossPaymentExecutor
+import com.yh.paymentwebflux.payment.application.port.`in`.PaymentConfirmCommand
+import com.yh.paymentwebflux.payment.application.port.`in`.PaymentConfirmUseCase
+import com.yh.paymentwebflux.payment.domain.PaymentConfirmationResult
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -16,23 +19,20 @@ import reactor.core.publisher.Mono
 @RestController
 @RequestMapping("/v1/toss")
 class TossPaymentController (
-    private val tossPaymentExecutor: TossPaymentExecutor
+    private val paymentConfirmUseCase: PaymentConfirmUseCase
 ){
 
     @PostMapping("/confirm")
-    fun confirm(@RequestBody request: TossPaymentConfirmRequest): Mono<ResponseEntity<ApiResponse<String>>> {
-        return tossPaymentExecutor.execute(
-            paymentKey = request.paymentKey,
-            orderId = request.orderId,
-            amount = request.amount.toString()
-        ).map {
-            ResponseEntity.ok().body(
-                ApiResponse.with(
-                    status = HttpStatus.OK,
-                    message = "결제 성공",
-                    data = it
-                )
-            )
-        }
+    fun confirm(@RequestBody request: TossPaymentConfirmRequest): Mono<ResponseEntity<ApiResponse<PaymentConfirmationResult>>> {
+       val command = PaymentConfirmCommand(
+           paymentKey = request.paymentKey,
+           orderId = request.orderId,
+           amount = request.amount.toLong(),
+       )
+
+        return paymentConfirmUseCase.confirm(command)
+            .map { ResponseEntity.ok().body(ApiResponse.with(HttpStatus.OK, "Ok", it)) }
+
+
     }
 }
