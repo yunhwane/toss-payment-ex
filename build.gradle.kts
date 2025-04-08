@@ -27,6 +27,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     runtimeOnly("com.mysql:mysql-connector-j")
+    testImplementation("io.mockk:mockk:1.13.2")
     runtimeOnly("io.asyncer:r2dbc-mysql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")

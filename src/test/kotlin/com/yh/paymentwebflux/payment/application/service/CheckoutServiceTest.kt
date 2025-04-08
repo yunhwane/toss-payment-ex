@@ -33,7 +33,7 @@ class CheckoutServiceTest(
     fun `should save PaymentEvent and PaymentOrder successfully`() {
         val orderId = UUID.randomUUID().toString()
         val checkoutCommand = CheckoutCommand(
-            certId = 1,
+            cartId = 1,
             buyerId = 1,
             productIds = listOf(1, 2, 3),
             idempotencyKey = orderId
@@ -59,7 +59,7 @@ class CheckoutServiceTest(
     fun `should fail to save PaymentEvent and PaymentOrder when trying to save for the second time`() {
         val orderId = UUID.randomUUID().toString()
         val checkoutCommand = CheckoutCommand(
-            certId = 1,
+            cartId = 1,
             buyerId = 1,
             productIds = listOf(1, 2, 3),
             idempotencyKey = orderId

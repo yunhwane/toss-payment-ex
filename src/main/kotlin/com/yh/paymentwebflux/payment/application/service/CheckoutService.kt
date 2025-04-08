@@ -20,7 +20,7 @@ class CheckoutService(
 ) : CheckoutUseCase{
 
     override fun checkout(command: CheckoutCommand): Mono<CheckoutResult> {
-        return loadProductPort.getProducts(command.certId, command.productIds)
+        return loadProductPort.getProducts(command.cartId, command.productIds)
             .collectList()
             .map { createPaymentEvent(command, it)}
             .flatMap { savePaymentPort.save(it).thenReturn(it) }

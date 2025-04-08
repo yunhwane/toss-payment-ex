@@ -3,7 +3,7 @@ package com.yh.paymentwebflux.payment.domain
 import java.time.LocalDateTime
 
 data class PaymentEvent (
-    val id: Long ?= null,
+    val id: Long? = null,
     val buyerId: Long,
     val orderName: String,
     val orderId: String,

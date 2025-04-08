@@ -55,14 +55,13 @@ class R2DBCPaymentStatusUpdateRepository(
     }
 
     private fun selectPaymentOrderStatus(orderId: String): Flux<Pair<Long, String>> {
-        return databaseClient.sql(SELECT_PAYMENT_ORDER_STATUS)
+        return databaseClient.sql(SELECT_PAYMENT_ORDER_STATUS_QUERY)
             .bind("orderId", orderId)
             .fetch()
             .all()
             .map { Pair(it["id"] as Long, it["payment_order_status"] as String)}
 
     }
-
     private fun insertPaymentHistory(
         paymentOrderIdToStatus: List<Pair<Long, String>>,
         status: PaymentStatus,
@@ -135,6 +134,7 @@ class R2DBCPaymentStatusUpdateRepository(
             .bind("orderName", command.extraDetails!!.orderName)
             .bind("method", command.extraDetails.method.name)
             .bind("approvedAt", command.extraDetails.approvedAt.toString())
+            .bind("orderId", command.orderId)
             .bind("type", command.extraDetails.type)
             .bind("pspRawData", command.extraDetails.pspRawData)
             .fetch()
@@ -143,10 +143,11 @@ class R2DBCPaymentStatusUpdateRepository(
 
 
     companion object {
-        val SELECT_PAYMENT_ORDER_STATUS = """
-            SELECT id, payment_order_status FROM payment_orders
-            WHERE id = :orderId
-        """.trimIndent()
+        val SELECT_PAYMENT_ORDER_STATUS_QUERY = """
+      SELECT id, payment_order_status
+      FROM payment_orders
+      WHERE order_id = :orderId
+    """.trimIndent()
 
         val INSERT_PAYMENT_HISTORY_QUERY = fun (valueClauses: String) = """
       INSERT INTO payment_order_histories (payment_order_id, previous_status, new_status, reason)
@@ -164,18 +165,17 @@ class R2DBCPaymentStatusUpdateRepository(
       SET payment_key = :paymentKey
       WHERE order_id = :orderId
     """.trimIndent()
-
-
         val UPDATE_PAYMENT_EVENT_EXTRA_DETAILS_QUERY = """
-            UPDATE payment_events
-            SET order_name = :orderName, method = :method, approved_at = :approvedAt, type = :type, update_at = CURRENT_TIMESTAMP, psp_raw_data = :pspRawData
-            WHERE order_id = :orderId
-        """.trimIndent()
+      UPDATE payment_events
+      SET order_name = :orderName, method = :method, approved_at = :approvedAt, type = :type, updated_at = CURRENT_TIMESTAMP, psp_raw_data = :pspRawData
+      WHERE order_id = :orderId
+    """.trimIndent()
+
 
         val INCREMENT_PAYMENT_ORDER_FAILED_COUNT_QUERY = """
-            UPDATE payment_orders
-            SET failed_count = failed_count + 1
-            WHERE order_id = :orderId
-        """.trimIndent()
+      UPDATE payment_orders
+      SET failed_count = failed_count + 1 
+      WHERE order_id = :orderId
+    """.trimIndent()
     }
 }

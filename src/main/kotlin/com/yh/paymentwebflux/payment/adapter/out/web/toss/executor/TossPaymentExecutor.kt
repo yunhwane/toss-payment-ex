@@ -20,22 +20,6 @@ class TossPaymentExecutor (
     private val uri: String = "/v1/payments/confirm"
 ) : PaymentExecutor {
 
-    fun execute(paymentKey: String, orderId: String, amount: String): Mono<String> {
-        return tossPaymentWebClient.post()
-            .uri(uri)
-            .bodyValue(
-                """
-                    {
-                        "paymentKey": "$paymentKey",
-                        "orderId": "$orderId",
-                        "amount": $amount
-                    }
-                """.trimIndent()
-            ).retrieve()
-            .bodyToMono(String::class.java)
-
-    }
-
     override fun execute(command: PaymentConfirmCommand): Mono<PaymentExecutionResult> {
         return tossPaymentWebClient.post()
             .uri(uri)
