@@ -4,6 +4,7 @@ import com.yh.paymentwebflux.common.PersistentAdapter
 import com.yh.paymentwebflux.payment.adapter.out.persistent.repository.PaymentRepository
 import com.yh.paymentwebflux.payment.adapter.out.persistent.repository.PaymentStatusUpdateRepository
 import com.yh.paymentwebflux.payment.adapter.out.persistent.repository.PaymentValidationRepository
+import com.yh.paymentwebflux.payment.application.port.out.PaymentStatusUpdateCommand
 import com.yh.paymentwebflux.payment.application.port.out.PaymentStatusUpdatePort
 import com.yh.paymentwebflux.payment.application.port.out.PaymentValidationPort
 import com.yh.paymentwebflux.payment.application.port.out.SavePaymentPort
@@ -27,6 +28,10 @@ class PaymentPersistentAdapter(
         paymentKey: String
     ): Mono<Boolean> {
         return paymentStatusUpdateRepository.updatePaymentStatusToExecuting(orderId, paymentKey)
+    }
+
+    override fun updatePaymentStatus(command: PaymentStatusUpdateCommand): Mono<Boolean> {
+        return paymentStatusUpdateRepository.updatePaymentStatus(command)
     }
 
     override fun isValid(orderId: String, amount: Long): Mono<Boolean> {
