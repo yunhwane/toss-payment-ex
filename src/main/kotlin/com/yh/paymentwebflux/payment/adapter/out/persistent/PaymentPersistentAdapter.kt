@@ -4,11 +4,10 @@ import com.yh.paymentwebflux.common.PersistentAdapter
 import com.yh.paymentwebflux.payment.adapter.out.persistent.repository.PaymentRepository
 import com.yh.paymentwebflux.payment.adapter.out.persistent.repository.PaymentStatusUpdateRepository
 import com.yh.paymentwebflux.payment.adapter.out.persistent.repository.PaymentValidationRepository
-import com.yh.paymentwebflux.payment.application.port.out.PaymentStatusUpdateCommand
-import com.yh.paymentwebflux.payment.application.port.out.PaymentStatusUpdatePort
-import com.yh.paymentwebflux.payment.application.port.out.PaymentValidationPort
-import com.yh.paymentwebflux.payment.application.port.out.SavePaymentPort
+import com.yh.paymentwebflux.payment.application.port.out.*
 import com.yh.paymentwebflux.payment.domain.PaymentEvent
+import com.yh.paymentwebflux.payment.domain.PendingPaymentEvent
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 
@@ -17,7 +16,7 @@ class PaymentPersistentAdapter(
     private val paymentRepository: PaymentRepository,
     private val paymentStatusUpdateRepository: PaymentStatusUpdateRepository,
     private val paymentValidationRepository: PaymentValidationRepository,
-) : SavePaymentPort, PaymentStatusUpdatePort, PaymentValidationPort{
+) : SavePaymentPort, PaymentStatusUpdatePort, PaymentValidationPort, LoadPendingPaymentPort {
 
     override fun save(paymentEvent: PaymentEvent): Mono<Void> {
         return paymentRepository.save(paymentEvent)
@@ -36,5 +35,9 @@ class PaymentPersistentAdapter(
 
     override fun isValid(orderId: String, amount: Long): Mono<Boolean> {
         return paymentValidationRepository.isValid(orderId, amount)
+    }
+
+    override fun getPendingPayments(): Flux<PendingPaymentEvent> {
+        return paymentRepository.getPendingPayments()
     }
 }
