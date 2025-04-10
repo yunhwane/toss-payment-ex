@@ -33,6 +33,24 @@ class R2DBCPaymentOutboxRepository(
             .thenReturn(paymentEventMessage)
     }
 
+    override fun markMessageAsSent(idempotencyKey: String, type: PaymentEventMessageType): Mono<Boolean> {
+        return databaseClient.sql(UPDATE_OUTBOX_MESSAGE_AS_SENT_QUERY)
+            .bind("idempotencyKey", idempotencyKey)
+            .bind("type", type)
+            .fetch()
+            .rowsUpdated()
+            .thenReturn(true)
+    }
+
+    override fun markMessageAsFailure(idempotencyKey: String, type: PaymentEventMessageType): Mono<Boolean> {
+        return databaseClient.sql(UPDATE_OUTBOX_MESSAGE_AS_FAILURE_QUERY)
+            .bind("idempotencyKey", idempotencyKey)
+            .bind("type", type)
+            .fetch()
+            .rowsUpdated()
+            .thenReturn(true)
+    }
+
     private fun createPaymentEventMessage(command: PaymentStatusUpdateCommand): PaymentEventMessage {
         return PaymentEventMessage(
             type = PaymentEventMessageType.PAYMENT_CONFIRMATION_SUCCESS,
@@ -51,5 +69,18 @@ class R2DBCPaymentOutboxRepository(
             INSERT INTO payment_outboxes (idempotency_key, type, partition_key, payload, metadata) 
             VALUES (:idempotencyKey, :type, :partitionKey, :payload, :metadata)
         """.trimIndent()
+
+        val UPDATE_OUTBOX_MESSAGE_AS_SENT_QUERY = """
+            UPDATE outboxes
+            SET status = 'SUCCESS'
+            WHERE idempotency_key = :idempotencyKey AND type = :type
+        """.trimIndent()
+
+        val UPDATE_OUTBOX_MESSAGE_AS_FAILURE_QUERY = """
+            UPDATE outboxes
+            SET status = 'FAILURE'
+            WHERE idempotency_key = :idempotencyKey AND type = :type
+        """.trimIndent()
+
     }
 }

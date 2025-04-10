@@ -15,11 +15,18 @@ spring:
       kafka:
         binder:
           brokers: localhost:9092
-
+          configuration:
+            key.serializer: org.apache.kafka.common.serialization.StringSerializer
+            value.serializer: org.springframework.kafka.support.serializer.JsonSerializer
+        bindings:
+          send-out-0:
+            producer:
+              record-metadata-channel: payment-result
       bindings:
-        consume-in-0:
+        send-out-0:
           destination: payment
           group: payment-service
+
 
 
 
