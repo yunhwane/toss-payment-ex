@@ -10,6 +10,18 @@ spring:
   thymeleaf:
     cache: false
 
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
+
+      bindings:
+        consume-in-0:
+          destination: payment
+          group: payment-service
+
+
 
 PSP:
   toss:
