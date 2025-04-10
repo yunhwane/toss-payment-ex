@@ -1,6 +1,8 @@
 package com.yh.paymentwebflux.payment.adapter.out.persistent.repository
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.yh.paymentwebflux.common.objectMapper
+import com.yh.paymentwebflux.payment.adapter.out.persistent.util.MySQLDateTimeFormatter
 import com.yh.paymentwebflux.payment.adapter.out.stream.util.PartitionKeyUtil
 import com.yh.paymentwebflux.payment.application.port.out.PaymentStatusUpdateCommand
 import com.yh.paymentwebflux.payment.domain.PaymentEventMessage
@@ -9,7 +11,9 @@ import com.yh.paymentwebflux.payment.domain.PaymentStatus
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.bind
 import org.springframework.stereotype.Repository
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import java.time.LocalDateTime
 
 
 @Repository
@@ -51,6 +55,20 @@ class R2DBCPaymentOutboxRepository(
             .thenReturn(true)
     }
 
+    override fun getPendingPaymentOutboxes(): Flux<PaymentEventMessage> {
+        return databaseClient.sql(SELECT_PENDING_PAYMENT_OUTBOX_QUERY)
+            .bind("createdAt", LocalDateTime.now().format(MySQLDateTimeFormatter))
+            .fetch()
+            .all()
+            .map {
+                PaymentEventMessage(
+                    type = PaymentEventMessageType.PAYMENT_CONFIRMATION_SUCCESS,
+                    payload = objectMapper.readValue<Map<String, Any>>(it["payload"] as String),
+                    metadata = objectMapper.readValue<Map<String, Any>>(it["metadata"] as String)
+                )
+            }
+    }
+
     private fun createPaymentEventMessage(command: PaymentStatusUpdateCommand): PaymentEventMessage {
         return PaymentEventMessage(
             type = PaymentEventMessageType.PAYMENT_CONFIRMATION_SUCCESS,
@@ -66,7 +84,7 @@ class R2DBCPaymentOutboxRepository(
 
     companion object {
         val INSERT_OUTBOX_QUERY = """
-            INSERT INTO payment_outboxes (idempotency_key, type, partition_key, payload, metadata) 
+            INSERT INTO outboxes (idempotency_key, type, partition_key, payload, metadata) 
             VALUES (:idempotencyKey, :type, :partitionKey, :payload, :metadata)
         """.trimIndent()
 
@@ -82,5 +100,13 @@ class R2DBCPaymentOutboxRepository(
             WHERE idempotency_key = :idempotencyKey AND type = :type
         """.trimIndent()
 
+
+        val SELECT_PENDING_PAYMENT_OUTBOX_QUERY = """
+            SELECT * 
+            FROM outboxes
+            WHERE (status = 'INIT' OR status = 'FAILURE')
+            AND created_at <= :createdAt - INTERVAL 1 MINUTE
+            AND type = 'PAYMENT_CONFIRMATION_SUCCESS'
+        """.trimIndent()
     }
 }

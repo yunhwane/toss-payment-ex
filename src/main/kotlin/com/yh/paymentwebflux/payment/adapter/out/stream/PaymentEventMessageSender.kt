@@ -3,6 +3,7 @@ package com.yh.paymentwebflux.payment.adapter.out.stream
 import com.yh.paymentwebflux.common.Logger
 import com.yh.paymentwebflux.common.StreamAdapter
 import com.yh.paymentwebflux.payment.adapter.out.persistent.repository.PaymentOutboxRepository
+import com.yh.paymentwebflux.payment.application.port.out.DispatchEventMessagePort
 import com.yh.paymentwebflux.payment.domain.PaymentEventMessage
 import com.yh.paymentwebflux.payment.domain.PaymentEventMessageType
 import jakarta.annotation.PostConstruct
@@ -27,7 +28,7 @@ import reactor.kafka.sender.SenderResult
 @StreamAdapter
 class PaymentEventMessageSender(
     private val paymentOutboxRepository: PaymentOutboxRepository
-) {
+) : DispatchEventMessagePort{
 
 
     private val sender = Sinks.many().unicast().onBackpressureBuffer<Message<PaymentEventMessage>>()
@@ -81,7 +82,7 @@ class PaymentEventMessageSender(
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    fun dispatch(paymentEventMessage: PaymentEventMessage) {
+    override fun dispatch(paymentEventMessage: PaymentEventMessage) {
         sender.emitNext(createEventMessage(paymentEventMessage), Sinks.EmitFailureHandler.FAIL_FAST)
     }
 

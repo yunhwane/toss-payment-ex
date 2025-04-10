@@ -1,11 +1,13 @@
 package com.yh.paymentwebflux.payment.adapter.out.persistent
 
 import com.yh.paymentwebflux.common.PersistentAdapter
+import com.yh.paymentwebflux.payment.adapter.out.persistent.repository.PaymentOutboxRepository
 import com.yh.paymentwebflux.payment.adapter.out.persistent.repository.PaymentRepository
 import com.yh.paymentwebflux.payment.adapter.out.persistent.repository.PaymentStatusUpdateRepository
 import com.yh.paymentwebflux.payment.adapter.out.persistent.repository.PaymentValidationRepository
 import com.yh.paymentwebflux.payment.application.port.out.*
 import com.yh.paymentwebflux.payment.domain.PaymentEvent
+import com.yh.paymentwebflux.payment.domain.PaymentEventMessage
 import com.yh.paymentwebflux.payment.domain.PendingPaymentEvent
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -16,7 +18,8 @@ class PaymentPersistentAdapter(
     private val paymentRepository: PaymentRepository,
     private val paymentStatusUpdateRepository: PaymentStatusUpdateRepository,
     private val paymentValidationRepository: PaymentValidationRepository,
-) : SavePaymentPort, PaymentStatusUpdatePort, PaymentValidationPort, LoadPendingPaymentPort {
+    private val paymentOutboxRepository: PaymentOutboxRepository
+) : SavePaymentPort, PaymentStatusUpdatePort, PaymentValidationPort, LoadPendingPaymentPort, LoadPendingPaymentEventMessagePort {
 
     override fun save(paymentEvent: PaymentEvent): Mono<Void> {
         return paymentRepository.save(paymentEvent)
@@ -39,5 +42,9 @@ class PaymentPersistentAdapter(
 
     override fun getPendingPayments(): Flux<PendingPaymentEvent> {
         return paymentRepository.getPendingPayments()
+    }
+
+    override fun getPendingPaymentEventMessage(): Flux<PaymentEventMessage> {
+        return paymentOutboxRepository.getPendingPaymentOutboxes()
     }
 }
