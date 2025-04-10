@@ -19,7 +19,7 @@ class PaymentEventMessageRelayService(
 
     private val scheduler = Schedulers.newSingle("payment-event-message-relay-scheduler")
 
-    @Scheduled(fixedDelay = 1, initialDelay = 1, timeUnit = TimeUnit.SECONDS )
+    @Scheduled(fixedDelay = 180, initialDelay = 180, timeUnit = TimeUnit.SECONDS )
     override fun relay() {
         loadPendingPaymentEventMessagePort.getPendingPaymentEventMessage()
             .map { dispatchEventMessagePort.dispatch(it) }
